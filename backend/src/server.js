@@ -10,10 +10,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+const crypto = require('crypto');
 const express = require("express");
-const path = require("path");
+const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 8080;
+
+app.use(cors(), express.json());
 
 // Configures the Cloud Spanner client
 const {Spanner} = require('@google-cloud/spanner');
@@ -21,42 +24,67 @@ const spanner = new Spanner({projectId: process.env.GOOGLE_CLOUD_PROJECT_ID});
 const instance = spanner.instance(process.env.CLOUD_SPANNER_INSTANCE || 'hello-instance');
 const database = instance.database(process.env.CLOUD_SPANNER_DATABASE || 'hello-database');
 
-//Serve website
-app.use(express.static(path.join(__dirname, "..", "public")));
-
 //Get all singers
-app.get("/api/singers", async (req, res) => {
+app.get("/api/v1/singers", async (req, res) => {
   const [rows] = await database.run("SELECT * FROM Singers");
   res.send(rows);
 });
 
-//Get singer by id
-app.get("/api/singers/:id", async (req, res) => {
-  const id = Number(req.params.id);
-  if (isNaN(id)) {
-    res.status(422).send({ error: `Invalid SingerId ${id}` });
-    return;
-  }
+// Insert a singer (warning: no validation is done)
+app.post("/api/v1/singers", async (req, res) => {
+  const { firstName, lastName, birthDate } = req.body;
 
-  const query = {
-    sql: "SELECT * FROM Singers WHERE SingerId = @id",
-    params: { id }
-  };
-  const rows = await database.run(query);
+  const uuid = crypto.randomUUID();
+  database.runTransaction(async (error, transaction) => {
+    if (error) {
+      res.status(500).send({error: error.details});
+      return;
+    }
 
-  if (rows[0].length === 0) {
-    res.status(404).send({ error: `SingerId ${id} not found`});
-    return;
-  }
+    try {
+      await transaction.runUpdate({
+        sql: `INSERT INTO Singers
+          (SingerUuid, FirstName, LastName, BirthDate)
+          VALUES (@singerUuid, @firstName, @lastName, @birthDate)`,
+        params: {
+          singerUuid: uuid,
+          firstName,
+          lastName,
+          birthDate
+        }
+      });
+      await transaction.commit();
 
-  res.send(rows[0]);
+      res.status(201).send({
+        singerUuid: uuid,
+        firstName, lastName, birthDate
+      });
+    } catch (error) {
+      res.status(500).send({error: error.details});
+    }
+  });
 });
 
-//Client side routing fix on page refresh or direct browsing to non-root directory
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "public", "index.html"), (err) => {
-    if (err) {
-      res.status(500).send(err);
+// Deletes a given singer (warning: no validation is done)
+app.delete("/api/v1/singers/:uuid", async (req, res) => {
+  const uuid = req.params.uuid;
+
+  database.runTransaction(async (error, transaction) => {
+    if (error) {
+      res.status(500).send({ error: error.details });
+      return;
+    }
+
+    try {
+      await transaction.runUpdate({
+        sql: `DELETE FROM Singers WHERE SingerUuid = @singerUuid`,
+        params: { singerUuid: uuid }
+      });
+      await transaction.commit();
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).send({ error: error.details });
     }
   });
 });
