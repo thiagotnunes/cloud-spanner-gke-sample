@@ -16,7 +16,10 @@ spec:
     spec:
       containers:
       - name: hello-spanner-app
-        image: gcr.io/<PROJECT_ID>/hello-spanner-app:1.0.0
+        image: <REGION>-docker.pkg.dev/<PROJECT_ID>/hello-repo/hello-spanner-app:v1
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
+      serviceAccountName: <KSA_NAME>
+      nodeSelector:
+        iam.gke.io/gke-metadata-server-enabled: "true"

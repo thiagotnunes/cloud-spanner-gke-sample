@@ -10,6 +10,4 @@ spec:
     protocol: TCP
   selector:
     app: hello-spanner-app
-  serviceAccountName: <KSA_NAME>
-  nodeSelector:
-    iam.gke.io/gke-metadata-server-enabled: "true"
+
