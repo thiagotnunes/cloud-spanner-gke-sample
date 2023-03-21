@@ -56,8 +56,10 @@ app.post("/api/v1/singers", async (req, res) => {
       await transaction.commit();
 
       res.status(201).send({
-        singerUuid: uuid,
-        firstName, lastName, birthDate
+        SingerUuid: uuid,
+        FirstName: firstName,
+        LastName: lastName,
+        BirthDate: birthDate
       });
     } catch (error) {
       res.status(500).send({error: error.details});
