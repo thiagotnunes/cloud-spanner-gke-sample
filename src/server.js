@@ -12,11 +12,12 @@ limitations under the License.
 */
 const crypto = require('crypto');
 const express = require("express");
+const path = require('path');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 8080;
 
-app.use(cors(), express.json());
+app.use(cors(), express.json(), express.static(path.resolve(__dirname, '../client/build')));
 
 // Configures the Cloud Spanner client
 const {Spanner} = require('@google-cloud/spanner');
@@ -89,6 +90,10 @@ app.delete("/api/v1/singers/:uuid", async (req, res) => {
       res.status(500).send({ error: error.details });
     }
   });
+});
+
+app.get("*", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "../client/build", "index.html"));
 });
 
 //Start the server

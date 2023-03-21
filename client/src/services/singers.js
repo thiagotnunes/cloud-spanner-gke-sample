@@ -12,17 +12,14 @@ limitations under the License.
 */
 import axios from "axios";
 
-const port = process.env.PORT || 8080;
-const baseUrl = `http://localhost:${port}`;
-
 export async function getSingers() {
-    return axios.get(`${baseUrl}/api/v1/singers`);
+    return axios.get("/api/v1/singers");
 }
 
 export async function createSinger(singer) {
-    return axios.post(`${baseUrl}/api/v1/singers`, singer);
+    return axios.post("/api/v1/singers", singer);
 }
 
 export async function deleteSinger(uuid) {
-    return axios.delete(`${baseUrl}/api/v1/singers/${uuid}`);
+    return axios.delete(`/api/v1/singers/${uuid}`);
 }
