@@ -30,11 +30,16 @@ export default function App() {
 
     useEffect(() => {
         const fetchSingers = async () => {
-            const response = await getSingers();
-            setSingers(response.data);
+            try {
+                const response = await getSingers();
+                setSingers(response.data);
+                setError('');
+            } catch(error) {
+                setError('Error fetching singers from database');
+            }
         };
         fetchSingers();
-    });
+    }, []);
 
     return <LocalizationProvider dateAdapter={AdapterDayjs}>
         <Container maxWidth="md">
