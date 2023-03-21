@@ -93,4 +93,3 @@ app.delete("/api/v1/singers/:uuid", async (req, res) => {
 
 //Start the server
 app.listen(port, () => console.log(`App listening on port ${port}!`));
-
