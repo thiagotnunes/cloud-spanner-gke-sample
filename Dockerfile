@@ -12,21 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM node:19
+FROM node:18 AS build-env
+COPY . /app
+WORKDIR /app
 
-# Create app directory
-WORKDIR /usr/src/app
+RUN npm ci --omit=dev
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
-COPY package*.json ./
 
-# Bundle app source
-COPY . .
+FROM gcr.io/distroless/nodejs18-debian11
+COPY --from=build-env /app /app
+WORKDIR /app
 
-RUN npm install
-RUN npm run build
+CMD [ "./src/server.js" ]
 
-EXPOSE 8080
-CMD [ "npm", "run", "start" ]
