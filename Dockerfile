@@ -17,7 +17,7 @@ COPY . /app
 WORKDIR /app
 
 RUN npm ci --omit=dev
-
+RUN npm run build
 
 FROM gcr.io/distroless/nodejs18-debian11
 COPY --from=build-env /app /app
